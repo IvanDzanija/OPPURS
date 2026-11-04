@@ -107,6 +107,26 @@ void SystemClock_Config(void) {
 }
 
 /* USER CODE BEGIN 4 */
+int led_state = 0;
+
+void toggle_led() {
+  if ((led_state ^= 1)) {
+    gpio_led_state(LED3_ORANGE_ID, 1); // turn on
+    gpio_led_state(LED4_GREEN_ID, 1);  // turn on
+    gpio_led_state(LED5_RED_ID, 0);    // turn off
+    gpio_led_state(LED6_BLUE_ID, 0);   // turn off
+  } else {
+    gpio_led_state(LED3_ORANGE_ID, 0); // turn off
+    gpio_led_state(LED4_GREEN_ID, 0);  // turn off
+    gpio_led_state(LED5_RED_ID, 1);    // turn on
+    gpio_led_state(LED6_BLUE_ID, 1);   // turn on
+  }
+}
+
+void timer_callback() {
+  toggle_led();
+  timer2_wait_millisec(1000);
+}
 
 int main(void) {
   HAL_Init();
@@ -114,18 +134,10 @@ int main(void) {
   MX_TIM2_Init();
   HAL_TIM_Base_Start_IT(&htim2); // Timer start in interupt mode
   MX_GPIO_Init();
-  while (1) {
-    timer2_wait_millisec(DELAY_MS);
-    gpio_led_state(LED3_ORANGE_ID, 1); // turn on
-    gpio_led_state(LED4_GREEN_ID, 1);  // turn on
-    gpio_led_state(LED5_RED_ID, 0);    // turn off
-    gpio_led_state(LED6_BLUE_ID, 0);   // turn off
 
-    timer2_wait_millisec(DELAY_MS);
-    gpio_led_state(LED3_ORANGE_ID, 0); // turn off
-    gpio_led_state(LED4_GREEN_ID, 0);  // turn off
-    gpio_led_state(LED5_RED_ID, 1);    // turn on
-    gpio_led_state(LED6_BLUE_ID, 1);   // turn on
+  register_callback(timer_callback);
+  timer2_wait_millisec(1000);
+  while (1) {
   }
 }
 

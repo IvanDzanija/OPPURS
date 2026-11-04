@@ -41,6 +41,7 @@ extern TIM_HandleTypeDef htim2;
 void MX_TIM2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void register_callback(void (*fptr)());
 uint32_t timer2_get_millisec(void);
 void timer2_wait_millisec(uint32_t ms);
 /* USER CODE END Prototypes */

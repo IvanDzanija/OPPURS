@@ -19,9 +19,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
+#include "stm32f4xx_hal_def.h"
 
 /* USER CODE BEGIN 0 */
 uint32_t timer2_Ticks_Millisec;
+uint32_t current_timer;
+int32_t wanted_timer;
+
+void (*delay_callback)() = NULL;
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;
@@ -98,10 +103,22 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *tim_baseHandle) {
 
 /* USER CODE BEGIN 1 */
 
+void register_callback(void (*fptr)()) { delay_callback = fptr; }
+
+void check_delay() {
+  current_timer = timer2_get_millisec();
+  if (current_timer >= wanted_timer) {
+    current_timer = 0;
+    wanted_timer = -1;
+    delay_callback();
+  }
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM2) {
     timer2_Ticks_Millisec++;
   }
+  check_delay();
 }
 
 uint32_t timer2_get_millisec() {
@@ -112,18 +129,16 @@ uint32_t timer2_get_millisec() {
   return value;
 }
 
-void timer2_wait_millisec(uint32_t ms) {
-  uint32_t t1, t2;
-  t1 = timer2_get_millisec();
-  while (1) {
-    t2 = timer2_get_millisec();
-    if ((t2 - t1) >= ms)
-      break;
+void timer2_reset() {
+  NVIC_DisableIRQ(TIM2_IRQn);
+  timer2_Ticks_Millisec = 0;
+  NVIC_EnableIRQ(TIM2_IRQn);
+}
 
-    if (t2 < t1) {
-      break;
-    }
-  }
+void timer2_wait_millisec(uint32_t ms) {
+  current_timer = 0;
+  wanted_timer = ms;
+  timer2_reset();
 }
 
 /* USER CODE END 1 */
